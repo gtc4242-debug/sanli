@@ -222,6 +222,39 @@
             color: white;
         }
         
+        /* 移动设备菜单按钮 */
+        .mobile-menu-btn {
+            display: none;
+            background: #4a6491;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 767px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .filters {
+                display: none;
+            }
+            
+            .filters.active {
+                display: block;
+            }
+            
+            /* 手机上的图表优化 */
+            .chart-container {
+                height: 300px;
+            }
+        }
+        
         /* 桌面设备样式 */
         @media (min-width: 768px) {
             body {
@@ -302,44 +335,6 @@
             }
         }
         
-        /* 移动设备菜单按钮 */
-        .mobile-menu-btn {
-            display: none;
-            background: #4a6491;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            width: 100%;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        @media (max-width: 767px) {
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .filters {
-                display: none;
-            }
-            
-            .filters.active {
-                display: block;
-            }
-            
-            /* 手机上的图表优化 */
-            .chart-container {
-                height: 300px;
-            }
-            
-            /* 确保图表在手机上清晰 */
-            canvas {
-                -webkit-tap-highlight-color: transparent;
-            }
-        }
-        
         /* 超小屏幕设备 */
         @media (max-width: 380px) {
             .metrics {
@@ -350,13 +345,20 @@
                 height: 280px;
             }
         }
+        
+        /* 公司名称样式 */
+        .company-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>廣告預算與業績分析</h1>
-            <p class="subtitle">三利團隊業績、廣告費用與總單量趨勢分析</p>
+            <p class="subtitle">三利國際業績、廣告費用與總單量趨勢分析</p>
         </header>
         
         <button class="mobile-menu-btn" id="filter-toggle">顯示篩選選項 ▼</button>
@@ -391,7 +393,7 @@
                     <canvas id="mainChart"></canvas>
                 </div>
                 <div class="chart-controls">
-                    <button class="chart-btn active" data-action="zoom-in">放大</button>
+                    <button class="chart-btn" data-action="zoom-in">放大</button>
                     <button class="chart-btn" data-action="zoom-out">縮小</button>
                     <button class="chart-btn" data-action="reset">重置</button>
                 </div>
@@ -400,23 +402,27 @@
         
         <div class="metrics">
             <div class="metric-card">
+                <div class="company-name">三利國際</div>
                 <div class="metric-title">總業績</div>
-                <div class="metric-value" id="total-performance">9,328萬</div>
-                <div class="metric-change positive">+35.2% 同比增長</div>
+                <div class="metric-value" id="total-performance">9,808.8萬</div>
+                <div class="metric-change positive">+55.2% 同比增長</div>
             </div>
             <div class="metric-card">
+                <div class="company-name">三利國際</div>
                 <div class="metric-title">廣告費用</div>
-                <div class="metric-value" id="total-adCost">1,568萬</div>
+                <div class="metric-value" id="total-adCost">1,667.3萬</div>
                 <div class="metric-change negative">+12.7% 同比增長</div>
             </div>
             <div class="metric-card">
+                <div class="company-name">三利國際</div>
                 <div class="metric-title">總單量</div>
                 <div class="metric-value" id="total-orders">24,327</div>
                 <div class="metric-change">+4.5% 同比增長</div>
             </div>
             <div class="metric-card">
+                <div class="company-name">三利國際</div>
                 <div class="metric-title">投資回報率</div>
-                <div class="metric-value" id="roi-value">5.95</div>
+                <div class="metric-value" id="roi-value">5.88</div>
                 <div class="metric-change positive">+19.8% 同比增長</div>
             </div>
         </div>
@@ -479,6 +485,19 @@
             document.getElementById('total-adCost').textContent = formatNumber(totalAdCost);
             document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
             document.getElementById('roi-value').textContent = roi.toFixed(2);
+            
+            // 更新同比增长数据
+            document.querySelectorAll('.metric-change.positive').forEach(el => {
+                if (el.textContent.includes('同比增長')) {
+                    el.textContent = '+55.2% 同比增長';
+                }
+            });
+            
+            document.querySelectorAll('.metric-change.negative').forEach(el => {
+                if (el.textContent.includes('同比增長')) {
+                    el.textContent = '+12.7% 同比增長';
+                }
+            });
         }
 
         // 初始化圖表
