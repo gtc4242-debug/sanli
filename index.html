@@ -1,723 +1,105 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>廣告預算與業績分析</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7f9;
-            color: #333;
-            padding: 15px;
-            font-size: 14px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
-            color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-        
-        .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .dashboard {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .metric-card {
-            background: white;
-            padding: 15px 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            text-align: center;
-        }
-        
-        .metric-title {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .metric-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .metric-change {
-            font-size: 0.7rem;
-            margin-top: 3px;
-        }
-        
-        .positive {
-            color: #27ae60;
-        }
-        
-        .negative {
-            color: #e74c3c;
-        }
-        
-        .filters {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            margin-bottom: 15px;
-        }
-        
-        .filter-title {
-            font-size: 1rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        
-        .filter-group {
-            margin-bottom: 12px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        
-        select, input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        
-        .chart-wrapper {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-        
-        .chart-title {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
-            text-align: center;
-        }
-        
+<style>
+    /* 手機圖表尺寸 */
+    @media (max-width: 767px) {
         .chart-container {
-            height: 350px;
-            width: 100%;
-            position: relative;
+            height: 250px; /* 原本是 300px，縮小一點 */
         }
-        
-        .insights {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            margin-top: 15px;
-        }
-        
-        .insights-title {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        
-        .insight-item {
-            margin-bottom: 8px;
-            padding-left: 15px;
-            position: relative;
-            font-size: 0.9rem;
-        }
-        
-        .insight-item:before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: #4a6491;
-            font-size: 1rem;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 25px;
-            color: #777;
-            font-size: 0.8rem;
-        }
-        
-        .button {
-            background: #4a6491;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            width: 100%;
-        }
-        
-        .button:hover {
-            background: #3a5479;
-        }
-        
-        /* 图表控制按钮 */
-        .chart-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            justify-content: center;
-        }
-        
-        .chart-btn {
-            background: #e9ecef;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-        
-        .chart-btn.active {
-            background: #4a6491;
-            color: white;
-        }
-        
-        /* 移动设备菜单按钮 */
-        .mobile-menu-btn {
-            display: none;
-            background: #4a6491;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            width: 100%;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        @media (max-width: 767px) {
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .filters {
-                display: none;
-            }
-            
-            .filters.active {
-                display: block;
-            }
-            
-            /* 手机上的图表优化 */
-            .chart-container {
-                height: 300px;
-            }
-        }
-        
-        /* 桌面设备样式 */
-        @media (min-width: 768px) {
-            body {
-                padding: 20px;
-                font-size: 16px;
-            }
-            
-            header {
-                padding: 20px;
-                margin-bottom: 30px;
-            }
-            
-            h1 {
-                font-size: 2.2rem;
-            }
-            
-            .subtitle {
-                font-size: 1.1rem;
-            }
-            
-            .dashboard {
-                flex-direction: row;
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-            
-            .metrics {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 15px;
-                margin-bottom: 25px;
-            }
-            
-            .metric-card {
-                padding: 20px;
-            }
-            
-            .metric-title {
-                font-size: 0.9rem;
-            }
-            
-            .metric-value {
-                font-size: 1.8rem;
-            }
-            
-            .metric-change {
-                font-size: 0.9rem;
-            }
-            
-            .filters {
-                flex: 1;
-                margin-bottom: 0;
-            }
-            
-            .chart-wrapper {
-                flex: 3;
-                margin-bottom: 0;
-            }
-            
-            .chart-container {
-                height: 450px;
-            }
-            
-            .chart-title {
-                font-size: 1.3rem;
-            }
-            
-            .insights {
-                padding: 20px;
-                margin-top: 20px;
-            }
-            
-            .insights-title {
-                font-size: 1.3rem;
-            }
-            
-            .insight-item {
-                font-size: 1rem;
-            }
-        }
-        
-        /* 超小屏幕设备 */
-        @media (max-width: 380px) {
-            .metrics {
-                grid-template-columns: 1fr;
-            }
-            
-            .chart-container {
-                height: 280px;
-            }
-        }
-        
-        /* 公司名称样式 */
-        .company-name {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>廣告預算與業績分析</h1>
-            <p class="subtitle">三利國際業績、廣告費用與總單量趨勢分析</p>
-        </header>
-        
-        <button class="mobile-menu-btn" id="filter-toggle">顯示篩選選項 ▼</button>
-        
-        <div class="dashboard">
-            <div class="filters" id="filters-panel">
-                <h3 class="filter-title">數據篩選</h3>
-                <div class="filter-group">
-                    <label for="year-select">選擇年份</label>
-                    <select id="year-select">
-                        <option value="all">所有年份</option>
-                        <option value="2023">2023年</option>
-                        <option value="2024">2024年</option>
-                        <option value="2025" selected>2025年</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="metric-select">主要指標</label>
-                    <select id="metric-select">
-                        <option value="all" selected>全部顯示</option>
-                        <option value="performance">業績</option>
-                        <option value="adCost">廣告費用</option>
-                        <option value="orders">總單量</option>
-                    </select>
-                </div>
-                <button class="button" id="apply-filters">應用篩選</button>
-            </div>
-            
-            <div class="chart-wrapper">
-                <h3 class="chart-title">業績與廣告花費趨勢</h3>
-                <div class="chart-container">
-                    <canvas id="mainChart"></canvas>
-                </div>
-                <div class="chart-controls">
-                    <button class="chart-btn" data-action="zoom-in">放大</button>
-                    <button class="chart-btn" data-action="zoom-out">縮小</button>
-                    <button class="chart-btn" data-action="reset">重置</button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="company-name">三利國際</div>
-                <div class="metric-title">總業績</div>
-                <div class="metric-value" id="total-performance">9,808.8萬</div>
-                <div class="metric-change positive">+55.2% 同比增長</div>
-            </div>
-            <div class="metric-card">
-                <div class="company-name">三利國際</div>
-                <div class="metric-title">廣告費用</div>
-                <div class="metric-value" id="total-adCost">1,667.3萬</div>
-                <div class="metric-change negative">+12.7% 同比增長</div>
-            </div>
-            <div class="metric-card">
-                <div class="company-name">三利國際</div>
-                <div class="metric-title">總單量</div>
-                <div class="metric-value" id="total-orders">24,327</div>
-                <div class="metric-change">+4.5% 同比增長</div>
-            </div>
-            <div class="metric-card">
-                <div class="company-name">三利國際</div>
-                <div class="metric-title">投資回報率</div>
-                <div class="metric-value" id="roi-value">5.88</div>
-                <div class="metric-change positive">+19.8% 同比增長</div>
-            </div>
-        </div>
-        
-        <div class="insights">
-            <h3 class="insights-title">數據洞察</h3>
-            <div class="insight-item">2025年3月以來廣告費用顯著增加，但業績增長幅度高於廣告投入增長。</div>
-            <div class="insight-item">2025年1月業績達到峰值735萬，而廣告費用相對較低，投資回報率表現最佳。</div>
-            <div class="insight-item">2024年2月廣告費用最低，業績也相應較低，表明廣告投入與業績存在正相關關係。</div>
-            <div class="insight-item">總單量與業績趨勢基本一致，但2025年前幾個月出現單量下降而業績上升的情況，可能客單價有所提高。</div>
-        </div>
-        
-        <footer>
-            <p>數據來源: 廣告預算及業績.xlsx | 生成時間: 2023年12月</p>
-        </footer>
-    </div>
+    }
+</style>
 
-    <script>
-        // 數據
-        const data = [
-            { month: '2023-12', performance: 4434250, adCost: 751089, orders: 1328 },
-            { month: '2024-01', performance: 2997000, adCost: 647067, orders: 1521 },
-            { month: '2024-02', performance: 2702875, adCost: 255210, orders: 783 },
-            { month: '2024-03', performance: 4051460, adCost: 463279, orders: 935 },
-            { month: '2024-04', performance: 3171150, adCost: 671645, orders: 1377 },
-            { month: '2024-05', performance: 5850575, adCost: 685352, orders: 1414 },
-            { month: '2024-06', performance: 3551500, adCost: 691978, orders: 1301 },
-            { month: '2024-07', performance: 3892850, adCost: 821727, orders: 1500 },
-            { month: '2024-08', performance: 4518600, adCost: 808787, orders: 1509 },
-            { month: '2024-09', performance: 4896914, adCost: 753115, orders: 1349 },
-            { month: '2024-10', performance: 3625000, adCost: 922194, orders: 1462 },
-            { month: '2024-11', performance: 3266800, adCost: 701486, orders: 1133 },
-            { month: '2024-12', performance: 5426200, adCost: 794073, orders: 1112 },
-            { month: '2025-01', performance: 7358850, adCost: 544827, orders: 907 },
-            { month: '2025-02', performance: 4300525, adCost: 736252, orders: 874 },
-            { month: '2025-03', performance: 6310800, adCost: 1121538, orders: 1086 },
-            { month: '2025-04', performance: 5016050, adCost: 1066118, orders: 1027 },
-            { month: '2025-05', performance: 6399258, adCost: 1194634, orders: 1141 },
-            { month: '2025-06', performance: 4778873, adCost: 994740, orders: 1361 },
-            { month: '2025-07', performance: 5616833, adCost: 972304, orders: 1311 },
-            { month: '2025-08', performance: 5921502, adCost: 1075652, orders: 1217 }
-        ];
+<script>
+    // ===== 修改格式化數字為 K 單位 =====
+    function formatNumber(num) {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toLocaleString();
+    }
 
-        // 格式化數字
-        function formatNumber(num) {
-            if (num >= 10000) {
-                return (num / 10000).toFixed(1) + '萬';
-            }
-            return num.toLocaleString();
+    // ===== 修改圖表初始化部分 =====
+    function initChart(filteredData, metric) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        
+        if (mainChart) {
+            mainChart.destroy();
         }
 
-        // 計算總計和ROI
-        function calculateTotals(dataSubset) {
-            const totalPerformance = dataSubset.reduce((sum, item) => sum + item.performance, 0);
-            const totalAdCost = dataSubset.reduce((sum, item) => sum + item.adCost, 0);
-            const totalOrders = dataSubset.reduce((sum, item) => sum + item.orders, 0);
-            const roi = totalPerformance / totalAdCost;
-            
-            document.getElementById('total-performance').textContent = formatNumber(totalPerformance);
-            document.getElementById('total-adCost').textContent = formatNumber(totalAdCost);
-            document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
-            document.getElementById('roi-value').textContent = roi.toFixed(2);
-            
-            // 更新同比增长数据
-            document.querySelectorAll('.metric-change.positive').forEach(el => {
-                if (el.textContent.includes('同比增長')) {
-                    el.textContent = '+55.2% 同比增長';
-                }
+        const datasets = [];
+        if (metric === 'all' || metric === 'performance') {
+            datasets.push({
+                label: '業績',
+                data: filteredData.map(item => item.performance),
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
             });
-            
-            document.querySelectorAll('.metric-change.negative').forEach(el => {
-                if (el.textContent.includes('同比增長')) {
-                    el.textContent = '+12.7% 同比增長';
-                }
+        }
+        if (metric === 'all' || metric === 'adCost') {
+            datasets.push({
+                label: '廣告費用',
+                data: filteredData.map(item => item.adCost),
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            });
+        }
+        if (metric === 'all' || metric === 'orders') {
+            datasets.push({
+                label: '總單量',
+                data: filteredData.map(item => item.orders),
+                type: 'line',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                yAxisID: 'y1'
             });
         }
 
-        // 初始化圖表
-        let mainChart;
-        let currentScale = 1;
-
-        function initChart(filteredData, metric) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            
-            if (mainChart) {
-                mainChart.destroy();
-            }
-            
-            // 根據選擇的指標決定顯示哪些數據集
-            const datasets = [];
-            
-            if (metric === 'all' || metric === 'performance') {
-                datasets.push({
-                    label: '業績',
-                    data: filteredData.map(item => item.performance),
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1,
-                    yAxisID: 'y'
-                });
-            }
-            
-            if (metric === 'all' || metric === 'adCost') {
-                datasets.push({
-                    label: '廣告費用',
-                    data: filteredData.map(item => item.adCost),
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1,
-                    yAxisID: 'y'
-                });
-            }
-            
-            if (metric === 'all' || metric === 'orders') {
-                datasets.push({
-                    label: '總單量',
-                    data: filteredData.map(item => item.orders),
-                    type: 'line',
-                    fill: false,
-                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    yAxisID: 'y1'
-                });
-            }
-            
-            // 業績和廣告費用使用柱狀圖，總單量使用折線圖
-            mainChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: filteredData.map(item => item.month),
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45,
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: filteredData.map(item => item.month),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatNumber(value); // 金額顯示 K 單位
                             }
                         },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: '金額 (元)',
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
-                            },
-                            beginAtZero: true,
-                            ticks: {
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: '單量',
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
-                            },
-                            beginAtZero: true,
-                            grid: {
-                                drawOnChartArea: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
-                            }
-                        }
+                        title: { display: true, text: '金額 (K 元)' }
                     },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.dataset.label === '總單量') {
-                                        label += context.raw + '單';
-                                    } else {
-                                        label += formatNumber(context.raw) + '元';
-                                    }
-                                    return label;
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: '單量' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label + ': ';
+                                if (context.dataset.label === '總單量') {
+                                    label += context.raw + '單';
+                                } else {
+                                    label += formatNumber(context.raw) + '元';
                                 }
-                            }
-                        },
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
+                                return label;
                             }
                         }
                     }
                 }
-            });
-            
-            // 重置缩放状态
-            currentScale = 1;
-        }
-
-        // 頁面加載時初始化圖表
-        window.onload = function() {
-            // 初始顯示所有數據
-            initChart(data, 'all');
-            calculateTotals(data);
-            
-            // 添加篩選功能
-            document.getElementById('apply-filters').addEventListener('click', function() {
-                const year = document.getElementById('year-select').value;
-                const metric = document.getElementById('metric-select').value;
-                
-                let filteredData = data;
-                
-                if (year !== 'all') {
-                    filteredData = data.filter(item => item.month.startsWith(year));
-                }
-                
-                initChart(filteredData, metric);
-                calculateTotals(filteredData);
-                
-                // 在移动设备上应用筛选后隐藏筛选面板
-                if (window.innerWidth <= 767) {
-                    document.getElementById('filters-panel').classList.remove('active');
-                    document.getElementById('filter-toggle').textContent = '顯示篩選選項 ▼';
-                }
-            });
-            
-            // 移动设备筛选面板切换
-            document.getElementById('filter-toggle').addEventListener('click', function() {
-                const filtersPanel = document.getElementById('filters-panel');
-                filtersPanel.classList.toggle('active');
-                
-                if (filtersPanel.classList.contains('active')) {
-                    this.textContent = '隱藏篩選選項 ▲';
-                } else {
-                    this.textContent = '顯示篩選選項 ▼';
-                }
-            });
-            
-            // 图表控制按钮
-            document.querySelectorAll('.chart-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const action = this.dataset.action;
-                    
-                    if (action === 'zoom-in' && currentScale < 2) {
-                        currentScale += 0.2;
-                    } else if (action === 'zoom-out' && currentScale > 0.6) {
-                        currentScale -= 0.2;
-                    } else if (action === 'reset') {
-                        currentScale = 1;
-                    }
-                    
-                    // 应用缩放
-                    const chartContainer = document.querySelector('.chart-container');
-                    chartContainer.style.transform = `scale(${currentScale})`;
-                    chartContainer.style.transformOrigin = 'center center';
-                });
-            });
-        };
-        
-        // 窗口大小改变时重新渲染图表
-        window.addEventListener('resize', function() {
-            if (mainChart) {
-                mainChart.destroy();
-                const year = document.getElementById('year-select').value;
-                const metric = document.getElementById('metric-select').value;
-                
-                let filteredData = data;
-                if (year !== 'all') {
-                    filteredData = data.filter(item => item.month.startsWith(year));
-                }
-                
-                initChart(filteredData, metric);
             }
         });
-    </script>
-</body>
-</html>
+        currentScale = 1;
+    }
+</script>
